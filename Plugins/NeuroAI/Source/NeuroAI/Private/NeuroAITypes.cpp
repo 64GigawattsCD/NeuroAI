@@ -1,0 +1,74 @@
+#include "NeuroAITypes.h"
+#include "NeuroAIBPLibrary.h"
+
+TArray<int32> FNeuroNode::GetInputIndices() const
+{
+	TArray<int32> Indices;
+	InputWeightMap.GenerateKeyArray(Indices);
+	return Indices;
+}
+
+TArray<float> FNeuroNode::GetWeightsAsArray() const
+{
+	TArray<float> Weights;
+	InputWeightMap.GenerateValueArray(Weights);
+	return Weights;
+}
+
+float FNeuroNode::FeedForward(TArray<float> InputValues)
+{
+	int32 InputIndex = 0;
+	float Output = 0.f;
+	// Sum while applying weights
+	for(float W : GetWeightsAsArray())
+	{
+		Output += (InputValues[InputIndex] * W);
+		InputIndex++;
+	}
+	// Apply bias
+	Output += Bias;
+	return Output;
+}
+
+TArray<float> FNeuroLayer::FeedForward(TArray<float> InputValues)
+{
+	TArray<float> LayerOutputs;
+	// Evaluate each node
+	for(FNeuroNode& Node : LayerNodes)
+	{
+		TArray<float> NodeInputs;
+		for(int32 Index : Node.GetInputIndices())
+		{
+			NodeInputs.Add(InputValues[Index]);
+		}
+		LayerOutputs.Add(Node.FeedForward(NodeInputs));
+	}
+
+	// Apply activation function
+	LayerOutputs = UNeuroAIBPLibrary::NeuroActivationFunction(LayerOutputs, LayerActivationFunction);
+
+	return LayerOutputs;
+}
+
+FNeuroLobeInputOutput::FNeuroLobeInputOutput(TArray<float> InputValues, TArray<float> OutputValues)
+{
+	Input = InputValues;
+	Output = OutputValues;
+}
+
+TArray<float> FNeuroLobe::FeedForward(TArray<float> InputValues)
+{
+	TArray<float> LayerInput = InputValues;
+	for(FNeuroLayer& Layer : LobeLayers)
+	{
+		LayerInput = Layer.FeedForward(LayerInput);
+	}
+
+	LobeSnapshots.Add(FNeuroLobeInputOutput(InputValues, LayerInput));
+	return LayerInput;
+}
+
+void FNeuroLobe::ClearSnapshots()
+{
+	LobeSnapshots.Empty();
+}
