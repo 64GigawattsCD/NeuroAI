@@ -44,6 +44,10 @@ class UNeuroAIBPLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroLobe MutateLobeSimple(const FNeuroLobe InLobe, int32 NumWeightMutations, int32 NumBiasesMutations, int32 MaximumDeltaWeights, int32 MaximumDeltaBiases);
 
+	// Mutates the lobe by inserting a new layer, while preserving existing behavior
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroLobe MutateLobeNewHiddenLayer(const FNeuroLobe InLobe);
+	
 	// Returns true if the lobes are equivalent in structure and thus compatible for simple breeding
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static bool AreLobesHomologous(const FNeuroLobe A, const FNeuroLobe B);
@@ -51,4 +55,16 @@ class UNeuroAIBPLibrary : public UBlueprintFunctionLibrary
 	// Create a new lobe via a combination of the weights and biases of two existing compatible lobes
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroLobe BreedHomologousLobesSimple(const FNeuroLobe A, const FNeuroLobe B);
+
+	// Crete a new generation of lobes by breeding the first pair
+	FNeuroGeneration BreedNewGeneration(const FNeuroGeneration InGeneration, int32 NumBreeding, int32 OffspringPerPair);
+
+	// Create a new generation by adding new inputs to an existing generation of lobes
+	FNeuroGeneration MutateGenerationAddInputs(const FNeuroGeneration InGeneration, TArray<FName> InputNames);
+
+	// Create a new generation by removing inputs from an existing generation
+	FNeuroGeneration MutateGenerationRemoveInputs(const FNeuroGeneration InGeneration, TArray<int32> InputIndicesToRemove);
+
+	// Append the highest scoring lobes from one generation into another generation
+	void SurviveLobes(const FNeuroGeneration SurviveFrom, FNeuroGeneration & SurviveTo, int32 NumToSurvive);
 };

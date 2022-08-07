@@ -112,3 +112,88 @@ struct FNeuroLobe
 
     void ClearSnapshots();
 };
+
+// A generation of neuro lobes paired with their fitness scores
+USTRUCT(BlueprintType)
+struct FNeuroGeneration
+{
+    GENERATED_BODY()
+    
+    // Mapping of individual lobes paired with fitness scores
+    TArray<TPair<FNeuroLobe, float>> GenerationLobes;
+
+   // FNeuroGeneration() {};
+};
+
+// An entire lineage of generations of lobes
+USTRUCT(BlueprintType)
+struct FNeuroLineage
+{
+    GENERATED_BODY()
+    
+    // Mapping of individual lobes paired with fitness scores
+    TArray<FNeuroGeneration> LineageGenerations;
+
+    void AppendGeneration(FNeuroGeneration & InGeneration);
+    void AppendGenerations(TArray<FNeuroGeneration> InGenerations);
+    FNeuroGeneration & GetLatestGeneration();
+};
+
+template <typename InElementType>
+struct TPriorityQueueNode {
+    InElementType Element;
+    float Priority;
+
+    TPriorityQueueNode()
+    {
+    }
+
+    TPriorityQueueNode(InElementType InElement, float InPriority)
+    {
+        Element = InElement;
+        Priority = InPriority;
+    }
+
+    bool operator<(const TPriorityQueueNode<InElementType> Other) const
+    {
+        return Priority < Other.Priority;
+    }
+};
+
+template <typename InElementType>
+class TPriorityQueue {
+public:
+    TPriorityQueue()
+    {
+        Array.Heapify();
+    }
+
+public:
+    // Always check if IsEmpty() before Pop-ing!
+    InElementType Pop()
+    {
+        TPriorityQueueNode<InElementType> Node;
+        Array.HeapPop(Node);
+        return Node.Element;
+    }
+
+    TPriorityQueueNode<InElementType> PopNode()
+    {
+        TPriorityQueueNode<InElementType> Node;
+        Array.HeapPop(Node);
+        return Node;
+    }
+
+    void Push(InElementType Element, float Priority)
+    {
+        Array.HeapPush(TPriorityQueueNode<InElementType>(Element, Priority));
+    }
+
+    bool IsEmpty() const
+    {
+        return Array.Num() == 0;
+    }
+
+private:
+    TArray<TPriorityQueueNode<InElementType>> Array;
+};

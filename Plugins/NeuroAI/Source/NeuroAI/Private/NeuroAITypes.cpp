@@ -72,3 +72,21 @@ void FNeuroLobe::ClearSnapshots()
 {
 	LobeSnapshots.Empty();
 }
+
+void FNeuroLineage::AppendGeneration(FNeuroGeneration& InGeneration)
+{
+	LineageGenerations.Add(InGeneration);
+}
+
+void FNeuroLineage::AppendGenerations(TArray<FNeuroGeneration> InGenerations)
+{
+	for(FNeuroGeneration& InGeneration : InGenerations)
+	{
+		AppendGeneration(InGeneration);
+	}
+}
+
+FNeuroGeneration& FNeuroLineage::GetLatestGeneration()
+{
+	return LineageGenerations[LineageGenerations.Num() - 1];
+}
