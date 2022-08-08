@@ -34,15 +34,16 @@ class UNeuroAIBPLibrary : public UBlueprintFunctionLibrary
 	// Sigmoid/Logistic and Tanh functions should not be used in hidden layers as they make the model more susceptible to problems during training (due to vanishing gradients).
 	// Swish function is used in neural networks having a depth greater than 40 layers.
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
-	static FNeuroLobe GenerateRandomNeuroLobe(int32 NumInputs, int32 NumOutputs, int32 NumHiddenLayers, int32 HiddenLayerSize, ENeuroActivationFunction InputFunction = NAct_None,
-		ENeuroActivationFunction HLFunction = NAct_RectLinear, ENeuroActivationFunction OutputFunction = NAct_Sigmoid);
+	static FNeuroLobe GenerateRandomNeuroLobe(TArray<FName> InputNames, TArray<FName> OutputNames, int32 NumHiddenLayers, int32 HiddenLayerSize, ENeuroActivationFunction InputFunction = NAct_None,
+	ENeuroActivationFunction HLFunction = NAct_RectLinear, ENeuroActivationFunction OutputFunction = NAct_Sigmoid);
 
 	// Generates a layer of nodes with a given activation function
-	static FNeuroLayer GenerateRandomNeuroLayer(int32 NumNodes, ENeuroActivationFunction ActivationFunction);
+	static FNeuroLayer GenerateRandomNeuroLayer(int32 NumNodes, ENeuroActivationFunction ActivationFunction, int32 NumPreviousLayerNodes);
 
 	// Mutates the weights and biases by a given threshold to create a new lobe from an existing one
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
-	static FNeuroLobe MutateLobeSimple(const FNeuroLobe InLobe, int32 NumWeightMutations, int32 NumBiasesMutations, int32 MaximumDeltaWeights, int32 MaximumDeltaBiases);
+	static FNeuroLobe MutateLobeSimple(const FNeuroLobe InLobe, int32 NumWeightMutations, int32 NumBiasesMutations, float MaximumDeltaWeights, float
+	                                   MaximumDeltaBiases);
 
 	// Mutates the lobe by inserting a new layer, while preserving existing behavior
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
@@ -57,14 +58,45 @@ class UNeuroAIBPLibrary : public UBlueprintFunctionLibrary
 	static FNeuroLobe BreedHomologousLobesSimple(const FNeuroLobe A, const FNeuroLobe B);
 
 	// Crete a new generation of lobes by breeding the first pair
-	FNeuroGeneration BreedNewGeneration(const FNeuroGeneration InGeneration, int32 NumBreeding, int32 OffspringPerPair);
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration BreedNewGeneration(const FNeuroGeneration InGeneration, int32 NumBreeding, int32 OffspringPerPair);
 
 	// Create a new generation by adding new inputs to an existing generation of lobes
-	FNeuroGeneration MutateGenerationAddInputs(const FNeuroGeneration InGeneration, TArray<FName> InputNames);
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration MutateGenerationAddInputs(const FNeuroGeneration InGeneration, TArray<FName> InputNames);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration MutateGenerationAddLayer(const FNeuroGeneration InGeneration);
 
 	// Create a new generation by removing inputs from an existing generation
-	FNeuroGeneration MutateGenerationRemoveInputs(const FNeuroGeneration InGeneration, TArray<int32> InputIndicesToRemove);
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration MutateGenerationRemoveInputs(const FNeuroGeneration InGeneration, TArray<int32> InputIndicesToRemove);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration MutateGenerationSimple(const FNeuroGeneration InGeneration, int32 NumWeightMutations, int32 NumBiasesMutations, float MaximumDeltaWeights, float MaximumDeltaBiases);
 
 	// Append the highest scoring lobes from one generation into another generation
-	void SurviveLobes(const FNeuroGeneration SurviveFrom, FNeuroGeneration & SurviveTo, int32 NumToSurvive);
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration SurviveLobes(const FNeuroGeneration SurviveFrom, const FNeuroGeneration SurviveTo, int32 NumToSurvive);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroLineage AppendGenerationToLineage(const FNeuroLineage InLineage, const FNeuroGeneration InGeneration);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration SetGenerationScores(const FNeuroGeneration InGeneration, const TArray<float> InScores);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroLineage SetLastGenerationScores(const FNeuroLineage InLineage, const TArray<float> InScores);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration SetGenerationLobes(const FNeuroGeneration InGeneration, const TArray<FNeuroLobe> InLobes);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static FNeuroGeneration GetLatestGeneration(const FNeuroLineage InLineage);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static TArray<FNeuroLobe> GetGenerationLobes(const FNeuroGeneration InGeneration);
+
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static TArray<float> EvaluateLobe(FNeuroLobe InLobe, const TArray<float> Inputs);
 };

@@ -73,6 +73,25 @@ void FNeuroLobe::ClearSnapshots()
 	LobeSnapshots.Empty();
 }
 
+void FNeuroGeneration::SetGenerationLobes(const TArray<FNeuroLobe> InLobes)
+{
+	for(FNeuroLobe Lobe : InLobes)
+	{
+		GenerationLobes.Add(Lobe);
+		GenerationScores.Add(0.f);
+	}
+}
+
+void FNeuroGeneration::SetGenerationScores(const TArray<float> InScores)
+{
+	int32 Index = 0;
+	while(Index < InScores.Num() && Index < GenerationScores.Num())
+	{
+		GenerationScores[Index] = InScores[Index];
+		Index++;
+	}
+}
+
 void FNeuroLineage::AppendGeneration(FNeuroGeneration& InGeneration)
 {
 	LineageGenerations.Add(InGeneration);
@@ -86,7 +105,15 @@ void FNeuroLineage::AppendGenerations(TArray<FNeuroGeneration> InGenerations)
 	}
 }
 
-FNeuroGeneration& FNeuroLineage::GetLatestGeneration()
+FNeuroGeneration FNeuroLineage::GetLatestGeneration()
 {
-	return LineageGenerations[LineageGenerations.Num() - 1];
+	if(LineageGenerations.Num() > 0)
+	{
+		return LineageGenerations[LineageGenerations.Num() - 1];
+	}
+	else
+	{
+		FNeuroGeneration NewGen = FNeuroGeneration();
+		return NewGen;
+	}
 }

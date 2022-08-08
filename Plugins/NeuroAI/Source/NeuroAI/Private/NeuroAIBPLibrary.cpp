@@ -2,6 +2,7 @@
 
 #include "NeuroAIBPLibrary.h"
 
+#include "EnvironmentQuery/EnvQueryTypes.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UNeuroAIBPLibrary::UNeuroAIBPLibrary(const FObjectInitializer& ObjectInitializer)
@@ -183,53 +184,39 @@ TArray<float> UNeuroAIBPLibrary::NeuroActivationFunction_Exponential(TArray<floa
 	return Output;
 }
 
-FNeuroLobe UNeuroAIBPLibrary::GenerateRandomNeuroLobe(int32 NumInputs, int32 NumOutputs, int32 NumHiddenLayers,
-                                                      int32 HiddenLayerSize, ENeuroActivationFunction InputFunction, ENeuroActivationFunction HLFunction,
-                                                      ENeuroActivationFunction OutputFunction)
+FNeuroLobe UNeuroAIBPLibrary::GenerateRandomNeuroLobe(TArray<FName> InputNames, TArray<FName> OutputNames, int32 NumHiddenLayers,
+int32 HiddenLayerSize, ENeuroActivationFunction InputFunction, ENeuroActivationFunction HLFunction, ENeuroActivationFunction OutputFunction)
 {
 	FNeuroLobe NewLobe = FNeuroLobe();
+	int32 PLN = InputNames.Num();
 	
 	//Create layers
 	for(int32 L = 0; L < NumHiddenLayers + 2; L++)
 	{
-		const int32 NumNodes = L == 0? NumInputs : (L == NumHiddenLayers + 1? NumOutputs : HiddenLayerSize);
+		const int32 NumNodes = L == 0? InputNames.Num() : (L == NumHiddenLayers + 1? OutputNames.Num() : HiddenLayerSize);
 		const ENeuroActivationFunction LayerFunction = L == 0? InputFunction : (L == NumHiddenLayers + 1? OutputFunction : HLFunction);
-		FNeuroLayer NewLayer = GenerateRandomNeuroLayer(NumNodes, LayerFunction);
+		FNeuroLayer NewLayer = GenerateRandomNeuroLayer(NumNodes, LayerFunction, PLN);
 		NewLobe.LobeLayers.Add(NewLayer);
-
-		//Create connections to previous layer
-		if(L > 0)
-		{
-			// For each node in the previous layer
-			for(int32 PLN = 0; PLN < NewLobe.LobeLayers[L-1].LayerNodes.Num(); PLN++)
-			{
-				// Each node in the new layer
-				for(int32 ConIndex = 0; ConIndex < NumNodes; ConIndex++)
-				{
-					// Adds a connection to it
-					const int32 ConnectTo = FMath::RandRange(0, NumNodes - 1);
-					NewLobe.LobeLayers[L].LayerNodes[ConnectTo].InputWeightMap.Emplace(PLN, FMath::RandRange(-1.f, 1.f));
-				}
-			}
-		}
+		
+		PLN = NumNodes;
 	}
 
-	for(int32 I = 0; I < NumInputs; I++)
+	for(int32 I = 0; I < InputNames.Num(); I++)
 	{
-		const FName Name = FName(FString("Input_") + FString::FromInt(I));
-		NewLobe.InputNames.Add(Name);
+		//const FName Name = FName(FString("Input_") + FString::FromInt(I));
+		NewLobe.InputNames.Add(InputNames[I]);
 	}
 
-	for(int32 O = 0; O < NumOutputs; O++)
+	for(int32 O = 0; O < OutputNames.Num(); O++)
 	{
-		const FName Name = FName(FString("Output_") + FString::FromInt(O));
-		NewLobe.InputNames.Add(Name);
+		//const FName Name = FName(FString("Output_") + FString::FromInt(O));
+		NewLobe.OutputNames.Add(OutputNames[O]);
 	}
 
 	return NewLobe;
 }
 
-FNeuroLayer UNeuroAIBPLibrary::GenerateRandomNeuroLayer(int32 NumNodes, ENeuroActivationFunction ActivationFunction)
+FNeuroLayer UNeuroAIBPLibrary::GenerateRandomNeuroLayer(int32 NumNodes, ENeuroActivationFunction ActivationFunction, int32 NumPreviousLayerNodes)
 {
 	FNeuroLayer NewLayer = FNeuroLayer();
 	NewLayer.LayerActivationFunction = ActivationFunction;
@@ -238,6 +225,10 @@ FNeuroLayer UNeuroAIBPLibrary::GenerateRandomNeuroLayer(int32 NumNodes, ENeuroAc
 	{
 		FNeuroNode Node = FNeuroNode();
 		Node.Bias = FMath::RandRange(-1.f, 1.f);
+		for(int32 C = 0; C < NumPreviousLayerNodes; C++)
+		{
+			Node.InputWeightMap.Emplace(C, FMath::RandRange(-1.f, 1.f));
+		}
 		NewLayer.LayerNodes.Add(Node);
 	}
 
@@ -245,7 +236,7 @@ FNeuroLayer UNeuroAIBPLibrary::GenerateRandomNeuroLayer(int32 NumNodes, ENeuroAc
 }
 
 FNeuroLobe UNeuroAIBPLibrary::MutateLobeSimple(const FNeuroLobe InLobe, int32 NumWeightMutations,
-	int32 NumBiasesMutations, int32 MaximumDeltaWeights, int32 MaximumDeltaBiases)
+                                               int32 NumBiasesMutations, float MaximumDeltaWeights, float MaximumDeltaBiases)
 {
 	// Catch improper networks
 	if(InLobe.LobeLayers.Num() < 2)
@@ -373,7 +364,7 @@ FNeuroLobe UNeuroAIBPLibrary::BreedHomologousLobesSimple(const FNeuroLobe A, con
 		for(int32 N = 0; N < NewLobe.LobeLayers[L].LayerNodes.Num(); N++)
 		{
 			// Create a new bias value in between that of the parents.
-			const float NewBias = FMath::Lerp(FMath::FRand(), A.LobeLayers[L].LayerNodes[N].Bias, B.LobeLayers[L].LayerNodes[N].Bias);
+			const float NewBias = FMath::FRand() >= 0.5f? A.LobeLayers[L].LayerNodes[N].Bias: B.LobeLayers[L].LayerNodes[N].Bias;
 			NewLobe.LobeLayers[L].LayerNodes[N].Bias = NewBias;
 			for(int32 W = 0; W < NewLobe.LobeLayers[L].LayerNodes[N].InputWeightMap.Num(); W++)
 			{
@@ -384,7 +375,7 @@ FNeuroLobe UNeuroAIBPLibrary::BreedHomologousLobesSimple(const FNeuroLobe A, con
 				B.LobeLayers[L].LayerNodes[N].InputWeightMap.GenerateValueArray(ValuesA);
 				A.LobeLayers[L].LayerNodes[N].InputWeightMap.GenerateValueArray(ValuesB);
 				// Create a new weight value in between that of the parents.
-				const float NewWeight = FMath::Lerp(FMath::FRand(), ValuesA[W], ValuesB[W]);
+				const float NewWeight = FMath::FRand() >= 0.5f? ValuesA[W] : ValuesB[W];
 				NewLobe.LobeLayers[L].LayerNodes[N].InputWeightMap.Emplace(Keys[W], NewWeight);
 			}
 		}
@@ -401,47 +392,49 @@ FNeuroGeneration UNeuroAIBPLibrary::BreedNewGeneration(const FNeuroGeneration In
 	{
 		NumBreeding = InGeneration.GenerationLobes.Num();
 	}
-	const int32 TotalPairings = (NumBreeding * (NumBreeding - 1)) / 2;
+	//const int32 TotalPairings = (NumBreeding * (NumBreeding - 1)) / 2;
 
 	// -- Begin sorting lobes
 	TPriorityQueue<FNeuroLobe> RankedLobes;
-	TArray<float> Scores;
-	for(TPair<FNeuroLobe, float> Lobe : InGeneration.GenerationLobes)
+	float MaxScore = 0.f;
+	for(int32 Score : InGeneration.GenerationScores)
 	{
-		Scores.Add(Lobe.Value);
+		MaxScore = FMath::Max(MaxScore, Score);
 	}
-	float MaxScore;
-	int32 MaxIndex;
-	UKismetMathLibrary::MaxOfFloatArray(Scores, MaxIndex, MaxScore);
-	for(TPair<FNeuroLobe, float> Lobe : InGeneration.GenerationLobes)
+
+	for(int32 L = 0; L < InGeneration.GenerationLobes.Num(); L++)
 	{
-		RankedLobes.Push(Lobe.Key, MaxScore - Lobe.Value);
+		RankedLobes.Push(InGeneration.GenerationLobes[L], MaxScore - InGeneration.GenerationScores[L]);
 	}
+	
 
 	TArray<FNeuroLobe> BreedingLobes;
 	// -- Iteration
-	for (int32 X = 0; X < TotalPairings; X++)
+	for (int32 X = 0; X < NumBreeding; X++)
 	{
 		FNeuroLobe Current = RankedLobes.Pop(); // Removes it from the top of the heap
 		BreedingLobes.Add(Current);
 	}
 
+	TArray<FNeuroLobe> NewLobes;
 	for(int32 A = 0; A < NumBreeding - 1; A++)
 	{
 		// 1,2 1,3 1,4 2,3 2,4 3,4
-		for(int32 B = A + 1; B < NumBreeding - 1; B++)
+		for(int32 B = A + 1; B < NumBreeding; B++)
 		{
 			for(int32 C = 0; C < OffspringPerPair; C++)
 			{
 				FNeuroLobe NewLobe = BreedHomologousLobesSimple(BreedingLobes[A], BreedingLobes[B]);
+				NewLobes.Add(NewLobe);
 			}
 		}
 	}
 
 	FNeuroGeneration NewGeneration = FNeuroGeneration();
-	for (int32 X = 0; X < TotalPairings; X++)
+	for (int32 X = 0; X < NewLobes.Num(); X++)
 	{
-		NewGeneration.GenerationLobes.Emplace(BreedingLobes[X], 0.f);
+		NewGeneration.GenerationLobes.Add(NewLobes[X]);
+		NewGeneration.GenerationScores.Add(0.f);
 	}
 
 	return NewGeneration;
@@ -451,8 +444,12 @@ FNeuroGeneration UNeuroAIBPLibrary::MutateGenerationAddInputs(const FNeuroGenera
 	TArray<FName> InputNames)
 {
 	FNeuroGeneration NewGeneration = InGeneration;
-	for(TPair<FNeuroLobe, float>& Lobe: NewGeneration.GenerationLobes)
+	for(int32 L = 0; L < NewGeneration.GenerationLobes.Num(); L++)
 	{
+		TPair<FNeuroLobe, float> Lobe;
+		Lobe.Key = NewGeneration.GenerationLobes[L];
+		Lobe.Value = NewGeneration.GenerationScores[L];
+		
 		Lobe.Key.InputNames.Append(InputNames);
 		FNeuroLayer & Layer = Lobe.Key.LobeLayers[0];
 		for(FNeuroNode & Node : Layer.LayerNodes)
@@ -468,12 +465,26 @@ FNeuroGeneration UNeuroAIBPLibrary::MutateGenerationAddInputs(const FNeuroGenera
 	return NewGeneration;
 }
 
-FNeuroGeneration UNeuroAIBPLibrary::MutateGenerationRemoveInputs(const FNeuroGeneration InGeneration,
-	TArray<int32> InputIndicesToRemove)
+FNeuroGeneration UNeuroAIBPLibrary::MutateGenerationAddLayer(const FNeuroGeneration InGeneration)
 {
 	FNeuroGeneration NewGeneration = InGeneration;
-	for(TPair<FNeuroLobe, float>& Lobe: NewGeneration.GenerationLobes)
+	for(int32 L = 0; L < NewGeneration.GenerationLobes.Num(); L++)
 	{
+		NewGeneration.GenerationLobes[L] = MutateLobeNewHiddenLayer(NewGeneration.GenerationLobes[L]);
+	}
+	return NewGeneration;
+}
+
+FNeuroGeneration UNeuroAIBPLibrary::MutateGenerationRemoveInputs(const FNeuroGeneration InGeneration,
+                                                                 TArray<int32> InputIndicesToRemove)
+{
+	FNeuroGeneration NewGeneration = InGeneration;
+	for(int32 L = 0; L < NewGeneration.GenerationLobes.Num(); L++)
+	{
+		TPair<FNeuroLobe, float> Lobe;
+		Lobe.Key = NewGeneration.GenerationLobes[L];
+		Lobe.Value = NewGeneration.GenerationScores[L];
+		
 		for(int32 Index: InputIndicesToRemove)
 		{
 			Lobe.Key.InputNames.RemoveAt(Index);
@@ -488,21 +499,31 @@ FNeuroGeneration UNeuroAIBPLibrary::MutateGenerationRemoveInputs(const FNeuroGen
 	return NewGeneration;
 }
 
-void UNeuroAIBPLibrary::SurviveLobes(const FNeuroGeneration SurviveFrom, FNeuroGeneration& SurviveTo,
-	int32 NumToSurvive)
+FNeuroGeneration UNeuroAIBPLibrary::MutateGenerationSimple(const FNeuroGeneration InGeneration,
+	int32 NumWeightMutations, int32 NumBiasesMutations, float MaximumDeltaWeights, float MaximumDeltaBiases)
 {
-	TPriorityQueue<FNeuroLobe> RankedLobes;
-	TArray<float> Scores;
-	for(TPair<FNeuroLobe, float> Lobe : SurviveFrom.GenerationLobes)
+	FNeuroGeneration NewGeneration = InGeneration;
+	for(int32 L = 0; L < NewGeneration.GenerationLobes.Num(); L++)
 	{
-		Scores.Add(Lobe.Value);
+		NewGeneration.GenerationLobes[L] = MutateLobeSimple(NewGeneration.GenerationLobes[L], NumWeightMutations, NumBiasesMutations, MaximumDeltaWeights, MaximumDeltaBiases);
 	}
-	float MaxScore;
-	int32 MaxIndex;
-	UKismetMathLibrary::MaxOfFloatArray(Scores, MaxIndex, MaxScore);
-	for(TPair<FNeuroLobe, float> Lobe : SurviveFrom.GenerationLobes)
+	return NewGeneration;
+}
+
+FNeuroGeneration UNeuroAIBPLibrary::SurviveLobes(const FNeuroGeneration SurviveFrom, const FNeuroGeneration SurviveTo,
+                                     int32 NumToSurvive)
+{
+	FNeuroGeneration NewGeneration = SurviveTo;
+	TPriorityQueue<FNeuroLobe> RankedLobes;
+	float MaxScore = 0.f;
+	for(int32 Score : SurviveFrom.GenerationScores)
 	{
-		RankedLobes.Push(Lobe.Key, MaxScore - Lobe.Value);
+		MaxScore = FMath::Max(MaxScore, Score);
+	}
+	
+	for(int32 L = 0; L < SurviveFrom.GenerationLobes.Num(); L++)
+	{
+		RankedLobes.Push(SurviveFrom.GenerationLobes[L], MaxScore - SurviveFrom.GenerationScores[L]);
 	}
 
 	TArray<TPair<FNeuroLobe, float>> SurvivingLobes;
@@ -513,6 +534,66 @@ void UNeuroAIBPLibrary::SurviveLobes(const FNeuroGeneration SurviveFrom, FNeuroG
 		SurvivingLobes.Emplace(Current, 0.f);
 	}
 
-	SurviveTo.GenerationLobes.Append(SurvivingLobes);
+	for(TPair<FNeuroLobe, float> Lobe : SurvivingLobes)
+	{
+		NewGeneration.GenerationLobes.Add(Lobe.Key);
+		NewGeneration.GenerationScores.Add(Lobe.Value);
+	}
+
+	return NewGeneration;
+}
+
+FNeuroLineage UNeuroAIBPLibrary::AppendGenerationToLineage(const FNeuroLineage InLineage,
+	const FNeuroGeneration InGeneration)
+{
+	FNeuroLineage NewLineage = InLineage;
+	NewLineage.LineageGenerations.Add(InGeneration);
+	return NewLineage;
+}
+
+FNeuroGeneration UNeuroAIBPLibrary::SetGenerationScores(const FNeuroGeneration InGeneration,
+	const TArray<float> InScores)
+{
+	FNeuroGeneration NewGeneration = InGeneration;
+	NewGeneration.SetGenerationScores(InScores);
+	return NewGeneration;
+}
+
+FNeuroLineage UNeuroAIBPLibrary::SetLastGenerationScores(const FNeuroLineage InLineage, const TArray<float> InScores)
+{
+	FNeuroLineage NewLineage = InLineage;
+	if(NewLineage.LineageGenerations.Num() > 0)
+	{
+		NewLineage.LineageGenerations[NewLineage.LineageGenerations.Num() - 1].SetGenerationScores(InScores);
+	}
+	return NewLineage;
+}
+
+FNeuroGeneration UNeuroAIBPLibrary::SetGenerationLobes(const FNeuroGeneration InGeneration,
+                                                       const TArray<FNeuroLobe> InLobes)
+{
+	FNeuroGeneration NewGeneration = InGeneration;
+	NewGeneration.SetGenerationLobes(InLobes);
+	return NewGeneration;
+}
+
+FNeuroGeneration UNeuroAIBPLibrary::GetLatestGeneration(const FNeuroLineage InLineage)
+{
+	return InLineage.LineageGenerations[InLineage.LineageGenerations.Num() - 1];
+}
+
+TArray<FNeuroLobe> UNeuroAIBPLibrary::GetGenerationLobes(const FNeuroGeneration InGeneration)
+{
+	TArray<FNeuroLobe> OutLobes;
+	for(FNeuroLobe Lobe : InGeneration.GenerationLobes)
+	{
+		OutLobes.Add(Lobe);
+	}
+	return OutLobes;
+}
+
+TArray<float> UNeuroAIBPLibrary::EvaluateLobe(FNeuroLobe InLobe, const TArray<float> Inputs)
+{
+	return InLobe.FeedForward(Inputs);
 }
 

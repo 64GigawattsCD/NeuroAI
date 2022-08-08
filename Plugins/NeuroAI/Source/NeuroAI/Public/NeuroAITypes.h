@@ -119,10 +119,18 @@ struct FNeuroGeneration
 {
     GENERATED_BODY()
     
-    // Mapping of individual lobes paired with fitness scores
-    TArray<TPair<FNeuroLobe, float>> GenerationLobes;
+    // 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Neuron")
+    TArray<FNeuroLobe> GenerationLobes;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Neuron")
+    TArray<float> GenerationScores;
 
    // FNeuroGeneration() {};
+    void SetGenerationLobes(const TArray<FNeuroLobe> InLobes);
+    void SetGenerationScores(const TArray<float> InScores);
+
+    bool Serialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
 };
 
 // An entire lineage of generations of lobes
@@ -132,11 +140,12 @@ struct FNeuroLineage
     GENERATED_BODY()
     
     // Mapping of individual lobes paired with fitness scores
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Neuron")
     TArray<FNeuroGeneration> LineageGenerations;
 
     void AppendGeneration(FNeuroGeneration & InGeneration);
     void AppendGenerations(TArray<FNeuroGeneration> InGenerations);
-    FNeuroGeneration & GetLatestGeneration();
+    FNeuroGeneration GetLatestGeneration();
 };
 
 template <typename InElementType>
