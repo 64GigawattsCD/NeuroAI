@@ -125,12 +125,10 @@ struct FNeuroGeneration
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Neuron")
     TArray<float> GenerationScores;
-
-   // FNeuroGeneration() {};
+    
     void SetGenerationLobes(const TArray<FNeuroLobe> InLobes);
     void SetGenerationScores(const TArray<float> InScores);
-
-    bool Serialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
+    bool GetHighestScoringLobe(FNeuroLobe& OutLobe);
 };
 
 // An entire lineage of generations of lobes

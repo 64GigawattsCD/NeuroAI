@@ -92,6 +92,31 @@ void FNeuroGeneration::SetGenerationScores(const TArray<float> InScores)
 	}
 }
 
+bool FNeuroGeneration::GetHighestScoringLobe(FNeuroLobe & OutLobe)
+{
+	int32 MaxIndex = -1;
+	float MaxScore = 0.f;
+	for(int32 I = 0; I < GenerationScores.Num(); I++)
+	{
+		const float & Score = GenerationScores[I];
+		if(Score > MaxScore)
+		{
+			MaxScore = Score;
+			MaxIndex = I;
+		}
+	}
+
+	if(MaxIndex > -1)
+	{
+		OutLobe = GenerationLobes[MaxIndex];
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void FNeuroLineage::AppendGeneration(FNeuroGeneration& InGeneration)
 {
 	LineageGenerations.Add(InGeneration);
