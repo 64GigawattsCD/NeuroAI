@@ -597,3 +597,8 @@ TArray<float> UNeuroAIBPLibrary::EvaluateLobe(FNeuroLobe InLobe, const TArray<fl
 	return InLobe.FeedForward(Inputs);
 }
 
+void UNeuroAIBPLibrary::SetLobeDesiredOutputs(FNeuroLobe& InLobe, TArray<float> InDesiredOutputs, int32 InputOutputIndex)
+{
+	InLobe.SetDesiredOutputs(InDesiredOutputs, InputOutputIndex);
+}
+

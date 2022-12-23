@@ -17,6 +17,20 @@ enum ENeuroActivationFunction
 };
 
 UENUM(BlueprintType)
+enum ENeuroErrorFunction
+{
+    NAct_None UMETA(DisplayName = "Linear Activation"),
+    NAct_RectLinear UMETA(DisplayName = "Rectified Linear"),
+    NAct_LeakyRectLinear UMETA(DisplayName = "Leaky Rectified Linear"),
+    NAct_BinaryStep UMETA(DisplayName = "Binary Step"),
+    NAct_Sigmoid UMETA(DisplayName = "Sigmoid"),
+    NAct_TanH UMETA(DisplayName = "Hyperbolic Tangent"),
+    NAct_Swish UMETA(DisplayName = "Swish"),
+    NAct_ArgMax UMETA(DisplayName = "Argmax"),
+    NAct_SoftMax UMETA(DisplayName = "Soft Max")
+};
+
+UENUM(BlueprintType)
 enum ENeuroLossFunction
 {
     NLoss_None UMETA(DisplayName = "None"),
@@ -70,20 +84,27 @@ struct FNeuroLayer
     TArray<float> FeedForward(TArray<float> InputValues);
 };
 
-// A snapshot of a lobe's output paired to the input
+// A snapshot of a lobe's output paired to the input and error list
 USTRUCT(BlueprintType)
 struct FNeuroLobeInputOutput
 {
     GENERATED_BODY()
 
+    // Snapshots of inputs passed in
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Neuron")
     TArray<float> Input;
 
+    // Snapshots of output
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Neuron")
     TArray<float> Output;
 
+    // Tracking desired output per each input set
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Neuron")
+    TArray<float> DesiredOutput;
+
     FNeuroLobeInputOutput() {};
     FNeuroLobeInputOutput(TArray<float> InputValues, TArray<float> OutputValues);
+   
 };
 
 // A complete neural network, which itself can also be a component of larger networks
@@ -109,6 +130,7 @@ struct FNeuroLobe
     TArray<FNeuroLobeInputOutput> LobeSnapshots;
 
     TArray<float> FeedForward(TArray<float> InputValues);
+    void SetDesiredOutputs(TArray<float> InOutputs, int32 Index = -1);
 
     void ClearSnapshots();
 };

@@ -56,6 +56,25 @@ FNeuroLobeInputOutput::FNeuroLobeInputOutput(TArray<float> InputValues, TArray<f
 	Output = OutputValues;
 }
 
+void FNeuroLobe::SetDesiredOutputs(TArray<float> InOutputs, int32 Index)
+{
+	if(Index < 0)
+	{
+		LobeSnapshots[LobeSnapshots.Num() - 1].DesiredOutput = InOutputs;
+	}
+	else
+	{
+		if(LobeSnapshots.Num()-1 >= Index)
+		{
+			LobeSnapshots[Index].DesiredOutput = InOutputs;
+		}
+		else
+		{
+			// Something erroneous happened
+		}
+	}
+}
+
 TArray<float> FNeuroLobe::FeedForward(TArray<float> InputValues)
 {
 	TArray<float> LayerInput = InputValues;

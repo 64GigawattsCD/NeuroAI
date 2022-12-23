@@ -79,24 +79,35 @@ class UNeuroAIBPLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroGeneration SurviveLobes(const FNeuroGeneration SurviveFrom, const FNeuroGeneration SurviveTo, int32 NumToSurvive);
 
+	// Returns a lineage by adding a new generation to an exsting lineage
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroLineage AppendGenerationToLineage(const FNeuroLineage InLineage, const FNeuroGeneration InGeneration);
 
+	// Set the scores for each lobe in a generation
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroGeneration SetGenerationScores(const FNeuroGeneration InGeneration, const TArray<float> InScores);
 
+	// Set the scores for each lobe in the latest generation of a lineage
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroLineage SetLastGenerationScores(const FNeuroLineage InLineage, const TArray<float> InScores);
 
+	// Set the lobes a generation consists of
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroGeneration SetGenerationLobes(const FNeuroGeneration InGeneration, const TArray<FNeuroLobe> InLobes);
 
+	// Returns the latest generation of a lineage
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static FNeuroGeneration GetLatestGeneration(const FNeuroLineage InLineage);
 
+	// Get an array of lobes that composes a generation
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static TArray<FNeuroLobe> GetGenerationLobes(const FNeuroGeneration InGeneration);
 
+	// Retrieve a set of outputs from a lobe by evaluating a set of inputs
 	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
 	static TArray<float> EvaluateLobe(FNeuroLobe InLobe, const TArray<float> Inputs);
+
+	// Set the desired outputs for a particular input-output pair on the lobe
+	UFUNCTION(BlueprintCallable, Category = "NeuroAI")
+	static void SetLobeDesiredOutputs(FNeuroLobe& InLobe, TArray<float> InDesiredOutputs, int32 InputOutputIndex = -1);
 };
