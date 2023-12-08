@@ -19,15 +19,15 @@ enum ENeuroActivationFunction
 UENUM(BlueprintType)
 enum ENeuroErrorFunction
 {
-    NAct_None UMETA(DisplayName = "Linear Activation"),
-    NAct_RectLinear UMETA(DisplayName = "Rectified Linear"),
-    NAct_LeakyRectLinear UMETA(DisplayName = "Leaky Rectified Linear"),
-    NAct_BinaryStep UMETA(DisplayName = "Binary Step"),
-    NAct_Sigmoid UMETA(DisplayName = "Sigmoid"),
-    NAct_TanH UMETA(DisplayName = "Hyperbolic Tangent"),
-    NAct_Swish UMETA(DisplayName = "Swish"),
-    NAct_ArgMax UMETA(DisplayName = "Argmax"),
-    NAct_SoftMax UMETA(DisplayName = "Soft Max")
+    NErr_None UMETA(DisplayName = "Linear Activation"),
+    NErr_RectLinear UMETA(DisplayName = "Rectified Linear"),
+    NErr_LeakyRectLinear UMETA(DisplayName = "Leaky Rectified Linear"),
+    NErr_BinaryStep UMETA(DisplayName = "Binary Step"),
+    NErr_Sigmoid UMETA(DisplayName = "Sigmoid"),
+    NErr_TanH UMETA(DisplayName = "Hyperbolic Tangent"),
+    NErr_Swish UMETA(DisplayName = "Swish"),
+    NErr_ArgMax UMETA(DisplayName = "Argmax"),
+    NErr_SoftMax UMETA(DisplayName = "Soft Max")
 };
 
 UENUM(BlueprintType)

@@ -2,7 +2,7 @@
 
 #include "NeuroAIBPLibrary.h"
 
-#include "EnvironmentQuery/EnvQueryTypes.h"
+//#include "EnvironmentQuery/EnvQueryTypes.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UNeuroAIBPLibrary::UNeuroAIBPLibrary(const FObjectInitializer& ObjectInitializer)
